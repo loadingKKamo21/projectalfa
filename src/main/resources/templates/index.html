@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="layout/basic">
+<!--/* Title */-->
+<th:block layout:fragment="title">
+    <title>Board</title>
+</th:block>
+
+<!--/* Custom Head Tags */-->
+<th:block layout:fragment="custom-head">
+
+    <style>
+        .contentCell {
+            width: 50%;
+            text-align: start;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+
+</th:block>
+
+<!--/* Content */-->
+<th:block layout:fragment="content">
+
+    <section style="background-color: #eee;">
+        <div class="row mb-3">
+            <div class="col-4">
+                <div class="card">
+                    <div class="card-body">
+                        <p class="mb-4">
+                            <span class="text-primary font-italic me-1">최근 공지글</span>
+                        </p>
+                        <table class="table table-borderless" width="100%" cellspacing="0" style="text-align: center;">
+                            <thead>
+                            <tr class="thead-light">
+                                <th>분류</th>
+                                <th class="contentCell">제목</th>
+                                <th>조회</th>
+                                <th>댓글</th>
+                                <th>등록일</th>
+                            </tr>
+                            </thead>
+                            <tbody id="top10Notice"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="card">
+                    <div class="card-body">
+                        <p class="mb-4">
+                            <span class="text-primary font-italic me-1">오늘 게시글 조회 Top 10</span>
+                        </p>
+                        <table class="table table-borderless" width="100%" cellspacing="0" style="text-align: center;">
+                            <thead>
+                            <tr class="thead-light">
+                                <th>분류</th>
+                                <th class="contentCell">제목</th>
+                                <th>조회</th>
+                                <th>댓글</th>
+                                <th>등록일</th>
+                            </tr>
+                            </thead>
+                            <tbody id="top10View"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="card">
+                    <div class="card-body">
+                        <p class="mb-4">
+                            <span class="text-primary font-italic me-1">오늘 게시글 댓글 Top 10</span>
+                        </p>
+                        <table class="table table-borderless" width="100%" cellspacing="0" style="text-align: center;">
+                            <thead>
+                            <tr class="thead-light">
+                                <th>분류</th>
+                                <th class="contentCell">제목</th>
+                                <th>조회</th>
+                                <th>댓글</th>
+                                <th>등록일</th>
+                            </tr>
+                            </thead>
+                            <tbody id="top10Comment"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-6">
+                <div class="card">
+                    <div class="card-body">
+                        <p class="mb-4">
+                            <span class="text-primary font-italic me-1">새로운 게시글</span>
+                        </p>
+                        <table class="table table-borderless" width="100%" cellspacing="0" style="text-align: center;">
+                            <thead>
+                            <tr class="thead-light">
+                                <th>분류</th>
+                                <th class="contentCell" width="60%">제목</th>
+                                <th>조회</th>
+                                <th>댓글</th>
+                                <th>등록일</th>
+                            </tr>
+                            </thead>
+                            <tbody id="newPosts"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="card">
+                    <div class="card-body">
+                        <p class="mb-4">
+                            <span class="text-primary font-italic me-1">새로운 댓글</span>
+                        </p>
+                        <table class="table table-borderless" width="100%" cellspacing="0" style="text-align: center;">
+                            <thead>
+                            <tr class="thead-light">
+                                <th class="contentCell">내용</th>
+                                <th>게시글</th>
+                                <th>등록일</th>
+                            </tr>
+                            </thead>
+                            <tbody id="newComments"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</th:block>
+
+<!--/* Custom Script */-->
+<th:block layout:fragment="custom-script">
+    <script th:inline="javascript">
+        /* <![CDATA[ */
+
+        const msg = [[${message}]] ? [[${message}]] : null;
+        if (msg) alert(msg);
+
+        window.onload = function () {
+            noticeTop10Load();
+            viewsTop10Load();
+            commentsTop10Load();
+            newPostsTop10Load();
+            newCommentsTop10Load();
+        }
+
+        function noticeTop10Load() {
+            const $top10Notice = $('#top10Notice');
+
+            //기존에 출력된 목록이 있다면 삭제
+            $top10Notice.children('tr').remove();
+
+            $.ajax({
+                type: 'post',
+                url: '/posts/top10Notice',
+                contentType: 'application/json',
+                async: false,
+                success: function (result) {
+                    let postHtml = ``;
+
+                    if (!result.empty)
+                        for (let post of result)
+                            postHtml += `
+                                    <tr>
+                                        <td>${post.category}</td>
+                                        <td class="contentCell" onclick="location.href='/posts/read?id=${post.id}'">${post.title}</td>
+                                        <td>${post.viewCount}</td>
+                                        <td>${post.commentsCount}</td>
+                                        <td>${(dateFormat(post.createdDate))}</td>
+                                    </tr>
+                                    `;
+                    else
+                        postHtml += `
+                                    <tr>
+                                        <td colspan="5">조회 결과가 없습니다.</td>
+                                    </tr>
+                                    `;
+
+                    $top10Notice.append(postHtml);
+                },
+                error: function (error) {
+                    alert('게시글 목록을 불러올 수 없습니다.');
+                },
+            });
+
+            $('#top10Notice td:nth-child(2)').mouseover(function () {
+                $(this).css('cursor', 'pointer');
+            }).mouseout(function () {
+                $(this).css('cursor', '');
+            });
+        }
+
+        function viewsTop10Load() {
+            const $top10View = $('#top10View');
+
+            //기존에 출력된 목록이 있다면 삭제
+            $top10View.children('tr').remove();
+
+            $.ajax({
+                type: 'post',
+                url: '/posts/top10ViewCount',
+                contentType: 'application/json',
+                async: false,
+                success: function (result) {
+                    let postHtml = ``;
+
+                    if (!result.empty)
+                        for (let post of result)
+                            postHtml += `
+                                    <tr>
+                                        <td>${post.category}</td>
+                                        <td class="contentCell" onclick="location.href='/posts/read?id=${post.id}'">${post.title}</td>
+                                        <td><b>${post.viewCount}</b></td>
+                                        <td>${post.commentsCount}</td>
+                                        <td>${(dateFormat(post.createdDate))}</td>
+                                    </tr>
+                                    `;
+                    else
+                        postHtml += `
+                                    <tr>
+                                        <td colspan="5">조회 결과가 없습니다.</td>
+                                    </tr>
+                                    `;
+
+                    $top10View.append(postHtml);
+                },
+                error: function (error) {
+                    alert('게시글 목록을 불러올 수 없습니다.');
+                }
+            });
+
+            $('#top10View td:nth-child(2)').mouseover(function () {
+                $(this).css('cursor', 'pointer');
+            }).mouseout(function () {
+                $(this).css('cursor', '');
+            });
+        }
+
+        function commentsTop10Load() {
+            const $top10Comment = $('#top10Comment');
+
+            //기존에 출력된 목록이 있다면 삭제
+            $top10Comment.children('tr').remove();
+
+            $.ajax({
+                type: 'post',
+                url: '/posts/top10CommentCount',
+                contentType: 'application/json',
+                async: false,
+                success: function (result) {
+                    let postHtml = ``;
+
+                    if (!result.empty)
+                        for (let post of result)
+                            postHtml += `
+                                    <tr>
+                                        <td>${post.category}</td>
+                                        <td class="contentCell" onclick="location.href='/posts/read?id=${post.id}'">${post.title}</td>
+                                        <td>${post.viewCount}</td>
+                                        <td><b>${post.commentsCount}</b></td>
+                                        <td>${(dateFormat(post.createdDate))}</td>
+                                    </tr>
+                                    `;
+                    else
+                        postHtml += `
+                                    <tr>
+                                        <td colspan="5">조회 결과가 없습니다.</td>
+                                    </tr>
+                                    `;
+
+                    $top10Comment.append(postHtml);
+                },
+                error: function (error) {
+                    alert('게시글 목록을 불러올 수 없습니다.');
+                }
+            });
+
+            $('#top10Comment td:nth-child(2)').mouseover(function () {
+                $(this).css('cursor', 'pointer');
+            }).mouseout(function () {
+                $(this).css('cursor', '');
+            });
+        }
+
+        function newPostsTop10Load() {
+            const $newPosts = $('#newPosts');
+
+            //기존에 출력된 목록이 있다면 삭제
+            $newPosts.children('tr').remove();
+
+            $.ajax({
+                type: 'post',
+                url: '/posts/top10NewPosts',
+                contentType: 'application/json',
+                async: false,
+                success: function (result) {
+                    let postHtml = ``;
+
+                    if (!result.empty)
+                        for (let post of result)
+                            postHtml += `
+                                    <tr>
+                                        <td>${post.category}</td>
+                                        <td class="contentCell" onclick="location.href='/posts/read?id=${post.id}'">${post.title}</td>
+                                        <td>${post.viewCount}</td>
+                                        <td>${post.commentsCount}</td>
+                                        <td>${(dateFormat(post.createdDate))}</td>
+                                    </tr>
+                                    `;
+                    else
+                        postHtml += `
+                                    <tr>
+                                        <td colspan="5">조회 결과가 없습니다.</td>
+                                    </tr>
+                                    `;
+
+                    $newPosts.append(postHtml);
+                },
+                error: function (error) {
+                    alert('게시글 목록을 불러올 수 없습니다.');
+                }
+            });
+
+            $('#newPosts td:nth-child(2)').mouseover(function () {
+                $(this).css('cursor', 'pointer');
+            }).mouseout(function () {
+                $(this).css('cursor', '');
+            });
+        }
+
+        function newCommentsTop10Load() {
+            const $newComments = $('#newComments');
+
+            //기존에 출력된 목록이 있다면 삭제
+            $newComments.children('tr').remove();
+
+            $.ajax({
+                type: 'post',
+                url: '/comments/top10NewComments',
+                contentType: 'application/json',
+                async: false,
+                success: function (result) {
+                    let commentHtml = ``;
+
+                    if (!result.empty)
+                        for (let comment of result)
+                            commentHtml += `
+                                    <tr>
+                                        <td class="contentCell" onclick="location.href='/posts/read?id=${comment.pid}'">${comment.content}</td>
+                                        <td>${comment.ptitle}</td>
+                                        <td>${(dateFormat(comment.createdDate))}</td>
+                                    </tr>
+                                    `;
+                    else
+                        commentHtml += `
+                                    <tr>
+                                        <td colspan="3">조회 결과가 없습니다.</td>
+                                    </tr>
+                                    `;
+
+                    $newComments.append(commentHtml);
+                },
+                error: function (error) {
+                    alert('댓글 목록을 불러올 수 없습니다.');
+                }
+            });
+
+            $('#newComments td:nth-child(1)').mouseover(function () {
+                $(this).css('cursor', 'pointer');
+            }).mouseout(function () {
+                $(this).css('cursor', '');
+            });
+        }
+
+        function dateFormat(date) {
+            let now = new Date();
+            let writtenDate = new Date(date);
+
+            //작성일자가 오늘이면 시, 분 출력
+            if (now.getFullYear() === writtenDate.getFullYear() && now.getMonth() === writtenDate.getMonth() && now.getDate() === writtenDate.getDate())
+                return (writtenDate.getHours() < 10 ? '0' : '') + writtenDate.getHours() + (writtenDate.getMinutes() < 10 ? ':0' : ':') + writtenDate.getMinutes();
+            //작성일자가 오늘이 아니라면 년, 월, 일 출력
+            else
+                return writtenDate.getFullYear() + (writtenDate.getMonth() + 1 < 10 ? '-0' : '-') + (writtenDate.getMonth() + 1) + '-' + writtenDate.getDate();
+        }
+
+        /* ]]> */
+    </script>
+</th:block>

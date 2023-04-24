@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	  layout:decorate="layout/basic">
+<!--/* Title */-->
+<th:block layout:fragment="title">
+	<title>Board - 나의 활동</title>
+</th:block>
+
+<!--/* Custom Head Tags */-->
+<th:block layout:frgment="custom-head"></th:block>
+
+<!--/* Content */-->
+<th:block layout:fragment="content">
+
+	<!--/* Page Heading */-->
+	<div class="d-sm-flex align-items-center justify-content-between mb-4">
+		<h1 class="h3 mb-0 text-gray-800">나의 활동</h1>
+		<div class="row">
+			<div class="col">
+				<nav aria-label="breadcrumb" class="bg-light rounded-3 p-3 mb-4">
+					<ol class="breadcrumb mb-0">
+						<li class="breadcrumb-item"><a th:href="@{/}">홈</a></li>
+						<li class="breadcrumb-item active" aria-current="page">나의 활동</li>
+					</ol>
+				</nav>
+			</div>
+		</div>
+	</div>
+
+	<!--/* Content Row */-->
+	<section style="background-color: #eee;">
+		<div class="container py-5">
+			<div class="card shadow mb-4">
+				<div class="card-body">
+					<ul class="nav nav-tabs" role="tablist">
+						<li class="nav-item" role="presentation">
+							<button class="nav-link active" id="post-tab" data-toggle="tab" data-target="#post"
+									type="button" role="tab" aria-controls="post">작성한 게시글
+							</button>
+						</li>
+						<li class="nav-item" role="presentation">
+							<button class="nav-link" id="comment-tab" data-toggle="tab" data-target="#comment"
+									type="button" role="tab" aria-controls="comment">작성한 댓글
+							</button>
+						</li>
+					</ul>
+					<div class="tab-content" id="tapContent">
+						<div class="tab-pane fade" id="post" role="tabpanel" aria-labelledby="post-tab">
+							<th:block th:with="pageNumber 	 = ${posts.pageable.pageNumber},
+                       						   pageSize 	 = ${posts.pageable.pageSize},
+                       						   listSize      = ${posts.size},
+                       						   offset 		 = ${posts.pageable.offset},
+                       						   totalPages 	 = ${posts.totalPages},
+                       						   totalElements = ${posts.totalElements},
+                       						   startPage	 = ${(pageNumber / pageSize) * pageSize},
+                       						   endPage		 = ${(startPage + pageSize - 1) < totalPages - 1 ? (startPage + pageSize - 1) : totalPages - 1}">
+								<table class="table table-borderless" width="100%" cellspacing="0"
+									   style="text-align: center;">
+									<thead>
+									<tr class="thead-light">
+										<th>번호</th>
+										<th>분류</th>
+										<th width="50%">제목</th>
+										<th>조회</th>
+										<th>댓글</th>
+										<th>등록일</th>
+									</tr>
+									</thead>
+									<tbody id="postList">
+									<th:block th:if="${!posts.isEmpty()}">
+										<tr th:each="post : ${posts}">
+											<td th:text="${totalElements - (listSize * pageNumber) - postStat.index}">
+												번호
+											</td>
+											<td th:text="${post.category}">분류</td>
+											<td th:text="${post.title}"
+												th:onclick="'location.href=\'' + @{/posts/read(id=${post.id})} + '\''"
+												style="text-align: start; text-overflow: ellipsis; white-space: nowrap;">
+												제목
+											</td>
+											<td th:text="${post.viewCount}">조회</td>
+											<td th:text="${post.commentsCount}">댓글</td>
+											<td th:text="${#temporals.format(post.createdDate, 'yyyy-MM-dd').equals(#temporals.format(#temporals.createToday(), 'yyyy-MM-dd'))}
+														 ? ${#temporals.format(post.createdDate, 'HH:mm')}
+														 : ${#temporals.format(post.createdDate, 'yyyy-MM-dd')}">
+												등록일
+											</td>
+										</tr>
+									</th:block>
+									<th:block th:unless="${!posts.isEmpty()}">
+										<tr>
+											<td colspan="6" style="text-align: center;">조회 결과가 없습니다.</td>
+										</tr>
+									</th:block>
+									</tbody>
+								</table>
+								<th:block th:if="${!posts.isEmpty()}">
+									<ul class="pagination justify-content-center">
+										<li class="page-item"
+											th:classappend="${pageNumber < pageSize} ? 'disabled'">
+											<a class="page-link" th:href="@{/members/activity(pageP=0)}">
+												<span>&laquo;</span>
+											</a>
+										</li>
+										<li class="page-item"
+											th:classappend="${pageNumber < pageSize} ? 'disabled'">
+											<a class="page-link"
+											   th:href="@{/members/activity(pageP=${startPage - pageSize})}">
+												<span>&lt;</span>
+											</a>
+										</li>
+										<li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
+											th:classappend="${pageNumber == i} ? 'active'">
+											<a class="page-link" th:href="@{/members/activity(pageP=${i})}">
+												<span th:text="${i + 1}">i</span>
+											</a>
+										</li>
+										<li class="page-item"
+											th:classappend="${pageNumber == totalPages - 1 || totalPages - pageSize <= startPage} ? 'disabled'">
+											<a class="page-link" th:href="@{/members/activity(pageP=${endPage + 1})}">
+												<span>&gt;</span>
+											</a>
+										</li>
+										<li class="page-item"
+											th:classappend="${pageNumber == totalPages - 1 || totalPages - pageSize <= startPage} ? 'disabled'">
+											<a class="page-link"
+											   th:href="@{/members/activity(pageP=${totalPages - 1})}">
+												<span>&raquo;</span>
+											</a>
+										</li>
+									</ul>
+								</th:block>
+							</th:block>
+						</div>
+						<div class="tab-pane fade" id="comment" role="tabpanel" aria-labelledby="comment-tab">
+							<th:block th:with="pageNumber 	 = ${comments.pageable.pageNumber},
+                       						   pageSize 	 = ${comments.pageable.pageSize},
+                       						   listSize      = ${comments.size},
+                       						   offset 		 = ${comments.pageable.offset},
+                       						   totalPages 	 = ${comments.totalPages},
+                       						   totalElements = ${comments.totalElements},
+                       						   startPage	 = ${(pageNumber / pageSize) * pageSize},
+                       						   endPage		 = ${(startPage + pageSize - 1) < totalPages - 1 ? (startPage + pageSize - 1) : totalPages - 1}">
+								<table class="table table-borderless" width="100%" cellspacing="0"
+									   style="text-align: center;">
+									<thead>
+									<tr class="thead-light">
+										<th>번호</th>
+										<th width="50%">내용</th>
+										<th width="30%">게시글</th>
+										<th>등록일</th>
+									</tr>
+									</thead>
+									<tbody id="commentList">
+									<th:block th:if="${!comments.isEmpty()}">
+										<tr th:each="comment : ${comments}">
+											<td th:text="${totalElements - (listSize * pageNumber) - commentStat.index}">
+												번호
+											</td>
+											<td th:text="${comment.content}"
+												th:onclick="'location.href=\'' + @{/posts/read(id=${comment.pId})} + '\''"
+												style="text-align: start; text-overflow: ellipsis; white-space: nowrap;">
+												내용
+											</td>
+											<td th:text="${comment.pTitle}"
+												style="text-align: start; text-overflow: ellipsis; white-space: nowrap;">
+												게시글
+											</td>
+											<td th:text="${#temporals.format(comment.createdDate, 'yyyy-MM-dd').equals(#temporals.format(#temporals.createToday(), 'yyyy-MM-dd'))}
+														 ? ${#temporals.format(comment.createdDate, 'HH:mm')}
+														 : ${#temporals.format(comment.createdDate, 'yyyy-MM-dd')}">
+												등록일
+											</td>
+										</tr>
+									</th:block>
+									<th:block th:unless="${!comments.isEmpty()}">
+										<tr>
+											<td colspan="6" style="text-align: center;">조회 결과가 없습니다.</td>
+										</tr>
+									</th:block>
+									</tbody>
+								</table>
+								<th:block th:if="${!comments.isEmpty()}">
+									<ul class="pagination justify-content-center">
+										<li class="page-item"
+											th:classappend="${pageNumber < pageSize} ? 'disabled'">
+											<a class="page-link" th:href="@{/members/activity(pageC=0)}">
+												<span>&laquo;</span>
+											</a>
+										</li>
+										<li class="page-item"
+											th:classappend="${pageNumber < pageSize} ? 'disabled'">
+											<a class="page-link"
+											   th:href="@{/members/activity(pageC=${startPage - pageSize})}">
+												<span>&lt;</span>
+											</a>
+										</li>
+										<li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
+											th:classappend="${pageNumber == i} ? 'active'">
+											<a class="page-link" th:href="@{/members/activity(pageC=${i})}">
+												<span th:text="${i + 1}">i</span>
+											</a>
+										</li>
+										<li class="page-item"
+											th:classappend="${pageNumber == totalPages - 1 || totalPages - pageSize <= startPage} ? 'disabled'">
+											<a class="page-link" th:href="@{/members/activity(pageC=${endPage + 1})}">
+												<span>&gt;</span>
+											</a>
+										</li>
+										<li class="page-item"
+											th:classappend="${pageNumber == totalPages - 1 || totalPages - pageSize <= startPage} ? 'disabled'">
+											<a class="page-link"
+											   th:href="@{/members/activity(pageC=${totalPages - 1})}">
+												<span>&raquo;</span>
+											</a>
+										</li>
+									</ul>
+								</th:block>
+							</th:block>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+
+</th:block>
+
+<!--/* Custom Script */-->
+<th:block layout:fragment="custom-script">
+	<script th:inline="javascript">
+		/* <![CDATA[ */
+
+		$('#postList td:nth-child(3)').mouseover(function () {
+			$(this).css('cursor', 'pointer');
+		}).mouseout(function () {
+			$(this).css('cursor', '');
+		});
+
+		$('#commentList td:nth-child(2)').mouseover(function () {
+			$(this).css('cursor', 'pointer');
+		}).mouseout(function () {
+			$(this).css('cursor', '');
+		});
+
+		$(document).ready(function () {
+			const queryParams = window.location.search;
+			let $postTab = $('#post-tab');
+			let $postTabPane = $('#post');
+			let $commentTab = $('#comment-tab');
+			let $commentTabPane = $('#comment');
+
+			if (queryParams.includes('pageP')) {
+				if ($commentTab.hasClass('active')) $commentTab.removeClass('active');
+				if (!$postTab.hasClass('active')) $postTab.addClass('active');
+
+				$postTabPane.addClass('show active');
+			} else if (queryParams.includes('pageC') || $commentTab.hasClass('active')) {
+				$postTabPane.removeClass('show active');
+
+				if ($postTab.hasClass('active')) $postTab.removeClass('active');
+				if (!$commentTab.hasClass('active')) $commentTab.addClass('active');
+
+				$commentTabPane.addClass('show active');
+			} else
+				$postTabPane.addClass('show active');
+		});
+
+		/* ]]> */
+	</script>
+</th:block>

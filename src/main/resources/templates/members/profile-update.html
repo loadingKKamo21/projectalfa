@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="layout/basic">
+<!--/* Title */-->
+<th:block layout:fragment="title">
+    <title>Board - 내 프로필: 수정</title>
+</th:block>
+
+<!--/* Custom Head Tags */-->
+<th:block layout:fragment="custom-head"></th:block>
+
+<!--/* Content */-->
+<th:block layout:fragment="content">
+
+    <!--/* Page Heading */-->
+    <div class="d-sm-flex align-items-center justify-content-between">
+        <h1 class="h3 mb-0 text-gray-800">내 프로필: 수정</h1>
+        <div class="row">
+            <div class="col">
+                <nav aria-label="breadcrumb" class="bg-light rounded-3 p-3 mb-4">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a th:href="@{/}">홈</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/members/profile}">내 프로필</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">수정</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!--/* Content */-->
+    <section style="background-color: #eee;">
+        <div class="container py-5">
+            <form method="post" th:action="@{/members/profile-update}" th:object="${form}"
+                  enctype="multipart/form-data">
+                <input type="hidden" th:field="*{id}">
+                <div class="row">
+                    <div class="col-lg-4">
+                        <div class="card mb-4">
+                            <div class="card-body text-center">
+                                <img th:src="${member.image64}
+                                             ? ${'data:image/*;base64,' + member.image64}
+                                             : 'https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3.webp'"
+                                     alt="avatar" class="rounded-circle img-fluid" style="width: 150px;">
+                                <h5 class="my-3" th:text="${member.nickname}">Nickname</h5>
+                                <div class="d-flex justify-content-center mb-2">
+                                    <button type="button" class="btn btn-warning btn-sm ms-1"
+                                            onclick="deleteProfileImage();">
+                                        이미지 삭제
+                                    </button>
+                                </div>
+                                <div class="d-flex justify-content-center mb-2">
+                                    <input type="file" accept="image/*" data-width="150" data-height="150"
+                                           id="profileImage" name="profileImage"
+                                           class="btn btn-outline-primary ms-1">
+                                </div>
+                                <small>* 150 x 150 크기의 이미지만 가능합니다.</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-8">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-sm-3">
+                                        <p class="mb-0">계정 유형</p>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <p class="text-muted mb-0" th:if="${member.role == 'USER'}">사용자</p>
+                                        <p class="text-muted mb-0" th:if="${member.role == 'ADMIN'}">관리자</p>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-3">
+                                        <p class="mb-0">아이디</p>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <p class="text-muted mb-0" th:text="${member.username}">username</p>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-3">
+                                        <p class="mb-0">최근 수정일</p>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <p class="text-muted mb-0"
+                                           th:text="${#temporals.format(member.lastModifiedDate, 'yyyy년 MM월 dd일 HH시 mm분')}">
+                                            registration date</p>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-3">
+                                        <p class="mb-0">닉네임</p>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <input type="text" th:field="*{nickname}" size="50" maxlength="20"
+                                               th:class="${#fields.hasErrors('nickname')} ? 'border border-danger'"
+                                               th:placeholder="${#fields.hasErrors('nickname')} ? ${#strings.replace(#strings.replace(#fields.errors('nickname'), '[',''), ']', '')}">
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-3">
+                                        <p class="mb-0">서명</p>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <textarea rows="5" cols="50" th:field="*{signature}"
+                                                  placeholder="100자 이내로 입력해주세요." maxlength="100"
+                                                  th:class="${#fields.hasErrors('signature')} ? 'border border-danger'"></textarea>
+                                    </div>
+                                </div>
+                                <th:block th:if="${member.provider == null && member.providerId == null}">
+                                    <hr>
+                                    <div class="row">
+                                        <div class="col-sm-3">
+                                            <p class="mb-0">새로운 비밀번호</p>
+                                        </div>
+                                        <div class="col-sm-9" id="inputNewPassword">
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <div class="row">
+                                        <div class="col-sm-3">
+                                            <p class="mb-0">새로운 비밀번호 확인</p>
+                                        </div>
+                                        <div class="col-sm-9" id="inputRepeatPassword">
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <div class="row">
+                                        <div class="col-sm-3">
+                                            <p class="mb-0">기존 비밀번호*</p>
+                                        </div>
+                                        <div class="col-sm-9">
+                                            <input type="password" th:field="*{password}" size="50"
+                                                   maxlength="32" placeholder="반드시 입력해주세요."
+                                                   th:classappend="${#fields.hasErrors('password')} ? 'border border-danger'"
+                                                   th:placeholder="${#fields.hasErrors('password')}
+                                                               ? ${#strings.replace(#strings.replace(#fields.errors('password'), '[', ''), ']', '')}
+                                                               : '반드시 입력해주세요.'">
+                                        </div>
+                                    </div>
+                                </th:block>
+                                <div class="row mt-3 float-right">
+                                    <div class="col">
+                                        <th:block th:if="${member.provider == null && member.providerId == null}">
+                                            <button type="button" class="btn btn-outline-success mr-2"
+                                                    id="passwordChange">
+                                                비밀번호 수정
+                                            </button>
+                                        </th:block>
+                                        <button type="submit" class="btn btn-primary mr-2">수정하기</button>
+                                        <a class="btn btn-outline-primary mr-2" th:href="@{/members/profile}">돌아가기</a>
+                                        <button type="button" class="btn btn-danger" onclick="deleteAccount();">
+                                            탈퇴하기
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </section>
+
+</th:block>
+
+<!--/* Custom Script */-->
+<th:block layout:fragment="custom-script">
+    <script th:inline="javascript">
+        /* <![CDATA[ */
+
+        $(function () {
+            $('#id').val([[${member.id}]]);
+            $('#nickname').val([[${member.nickname}]]);
+            $('#signature').val([[${member.signature}]]);
+        });
+
+        $('#passwordChange').click(function () {
+            const newPasswordHtml = `<input type="password" id="newPassword" name="newPassword" size="50" maxlength="32">`;
+            const repeatPasswordHtml = `<input type="password" id="repeatPassword" name="repeatPassword" size="50" maxlength="32">`;
+
+            $('#inputNewPassword').append(newPasswordHtml);
+            $('#inputRepeatPassword').append(repeatPasswordHtml);
+
+            $(this).remove();
+        });
+
+        function deleteProfileImage() {
+            if (![[${member.image64}]]) {
+                alert('삭제할 이미지가 없습니다.');
+                return;
+            }
+            if (confirm('프로필 이미지를 삭제하시겠습니까?')) {
+                $("img[alt='avatar']").attr('src', 'https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3.webp');
+                $('form').append('<input type="hidden" name="deleteImg" value="true">');
+            }
+        }
+
+        function deleteAccount() {
+            if (confirm('탈퇴 하시겠습니까?')) {
+                if ([[${member.provider}]] == null && [[${member.providerId}]] == null)
+                    if (!$('#password').val()) {
+                        alert('비밀번호를 입력해주세요.');
+                        return
+                    }
+                const $form = $('form');
+                $form.attr('action', '/members/delete');
+                $form.submit();
+            } else
+                return;
+        }
+
+        /* ]]> */
+    </script>
+</th:block>

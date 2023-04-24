@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="layout/basic">
+<!--/* Title */-->
+<th:block layout:fragment="title">
+    <title></title>
+</th:block>
+
+<!--/* Custom Head Tags */-->
+<th:block layout:fragment="custom-head"></th:block>
+
+<!--/* Content */-->
+<th:block layout:fragment="content"></th:block>
+
+<!--/* Custom Script */-->
+<th:block layout:fragment="custom-script">
+    <script th:inline="javascript">
+    /* <![CDATA[ */
+    	
+    /* ]]> */
+    </script>
+</th:block>

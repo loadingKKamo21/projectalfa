@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="layout/basic">
+<!--/* Title */-->
+<th:block layout:fragment="title">
+    <title>Board - 게시판</title>
+</th:block>
+
+<!--/* Custom Head Tags */-->
+<th:block layout:fragment="custom-head">
+
+    <!--/* Custom styles for this page */-->
+    <link href="/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
+
+</th:block>
+
+<!--/* Content */-->
+<th:block layout:fragment="content">
+
+    <!--/* Page Heading */-->
+    <div class="d-sm-flex align-items-center justify-content-between">
+        <h1 class="h3 mb-0 text-gray-800">공지 게시판</h1>
+        <div class="row">
+            <div class="col">
+                <nav aria-label="breadcrumb" class="bg-light rounded-3 p-3 mb-4">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a th:href="@{/}">홈</a></li>
+                        <li class="breadcrumb-item"><a th:href="@{/posts}">게시판</a></li>
+                        <li class="breadcrumb-item active">공지</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!--/* Content Row */-->
+    <th:block th:with="pageNumber 	 = ${posts.pageable.pageNumber},
+                       pageSize 	 = ${posts.pageable.pageSize},
+                       listSize      = 10,
+                       offset 		 = ${posts.pageable.offset},
+                       totalPages 	 = ${posts.totalPages},
+                       totalElements = ${posts.totalElements},
+                       startPage	 = ${(pageNumber / pageSize) * pageSize},
+                       endPage		 = ${(startPage + pageSize - 1) < totalPages - 1 ? (startPage + pageSize - 1) : totalPages - 1}">
+        <section style="background-color: #eee;">
+            <div class="card shadow mb-4">
+                <div class="card-body">
+                    <!--/* Search */-->
+                    <div class="d-sm-flex justify-content-end mb-3">
+                        <form class="search" method="get" th:action="@{/posts/notice}">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <select class="custom-select" id="category" name="category"
+                                            style="text-align: center;">
+                                        <option value="">분류</option>
+                                        <option value="FREE" th:selected="${category} == 'FREE'">자유</option>
+                                        <option value="QNA" th:selected="${category} == 'QNA'">질문</option>
+                                    </select>
+                                </div>
+                                <div class="input-group-prepend">
+                                    <select class="custom-select" id="condition" name="condition"
+                                            style="text-align: center;">
+                                        <option value="">전체</option>
+                                        <option value="title" th:selected="${condition} == 'title'">제목</option>
+                                        <option value="content" th:selected="${condition} == 'content'">내용</option>
+                                        <option value="titleOrContent" th:selected="${condition} == 'titleOrContent'">
+                                            제목+내용
+                                        </option>
+                                        <option value="writer" th:selected="${condition} == 'writer'">작성자</option>
+                                    </select>
+                                </div>
+                                <input type="text" class="form-control" id="keyword" name="keyword" placeholder="검색..."
+                                       th:value="${keyword} ? ${keyword}">
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-primary" type="submit">검색</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!--/* Posts list */-->
+                    <div class="table-responsive text-wrap">
+                        <table class="table table-borderless table-hover" width="100%" cellspacing="0"
+                               style="text-align: center;">
+                            <thead class="thead-dark">
+                            <tr>
+                                <th>번호</th>
+                                <th>분류</th>
+                                <th width="70%">제목</th>
+                                <th>글쓴이</th>
+                                <th>조회</th>
+                                <th>댓글</th>
+                                <th>등록일</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <th:block th:if="${!posts.isEmpty()}">
+                                <tr th:each="post : ${posts}">
+                                    <td th:text="${totalElements - (listSize * pageNumber) - postStat.index}">번호</td>
+                                    <td th:text="${post.category}">분류</td>
+                                    <td th:text="${post.title}"
+                                        th:onclick="'location.href=\'' + @{/posts/read(id=${post.id})} + '\''"
+                                        style="text-align: start; text-overflow: ellipsis; white-space: nowrap;">제목
+                                    </td>
+                                    <td th:text="${post.wNickname}"
+                                        style="text-overflow: ellipsis; white-space: nowrap;">
+                                        글쓴이
+                                    </td>
+                                    <td th:text="${post.viewCount}">조회</td>
+                                    <td th:text="${post.commentsCount}">댓글</td>
+                                    <td th:text="${#temporals.format(post.createdDate, 'yyyy-MM-dd').equals(#temporals.format(#temporals.createToday(), 'yyyy-MM-dd'))}
+                                             ? ${#temporals.format(post.createdDate, 'HH:mm')}
+                                             : ${#temporals.format(post.createdDate, 'yyyy-MM-dd')}">
+                                        등록일
+                                    </td>
+                                </tr>
+                            </th:block>
+                            <th:block th:unless="${!posts.isEmpty()}">
+                                <tr>
+                                    <td colspan="6" style="text-align: center;">조회 결과가 없습니다.</td>
+                                </tr>
+                            </th:block>
+                            </tbody>
+                            <tfoot>
+                            <tr>
+                                <td colspan="7" style="text-align: end">
+                                    <div sec:authorize="hasRole('ROLE_ADMIN')">
+                                        <a class="btn btn-primary" th:href="@{/posts/write?notice=true}">글쓰기</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!--/* Pagination */-->
+                <th:block th:if="${!posts.isEmpty()}">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item" th:classappend="${pageNumber < pageSize} ? 'disabled'">
+                            <a class="page-link"
+                               th:href="@{/posts/notice(category=${category},condition=${condition},keyword=${keyword})}">
+                                <span>&laquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item" th:classappend="${pageNumber < pageSize} ? 'disabled'">
+                            <a class="page-link"
+                               th:href="@{/posts/notice(page=${startPage - pageSize},category=${category},condition=${condition},keyword=${keyword})}">
+                                <span>&lt;</span>
+                            </a>
+                        </li>
+                        <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
+                            th:classappend="${pageNumber == i} ? 'active'">
+                            <a class="page-link"
+                               th:href="@{/posts/notice(page=${i},category=${category},condition=${condition},keyword=${keyword})}">
+                                <span th:text="${i + 1}">i</span>
+                            </a>
+                        </li>
+                        <li class="page-item"
+                            th:classappend="${(endPage - startPage + 1) * listSize < pageSize * listSize} ? 'disabled'">
+                            <a class="page-link"
+                               th:href="@{/posts/notice(page=${endPage + 1},category=${category},condition=${condition},keyword=${keyword})}">
+                                <span>&gt;</span>
+                            </a>
+                        </li>
+                        <li class="page-item"
+                            th:classappend="${pageNumber == totalPages - 1 || totalPages - pageSize <= startPage} ? 'disabled'">
+                            <a class="page-link"
+                               th:href="@{/posts/notice(page=${totalPages - 1},category=${category},condition=${condition},keyword=${keyword})}">
+                                <span>&raquo;</span>
+                            </a>
+                        </li>
+                    </ul>
+                </th:block>
+            </div>
+        </section>
+    </th:block>
+
+</th:block>
+
+<!--/* Custom Script */-->
+<th:block layout:fragment="custom-script">
+
+    <!--/* Page level plugins */-->
+    <script src="/vendor/datatables/jquery.dataTables.min.js"></script>
+    <script src="/vendor/datatables/dataTables.bootstrap4.min.js"></script>
+
+    <!--/* Page level custom scripts */-->
+    <script src="/js/demo/datatables-demo.js"></script>
+
+    <script th:inline="javascript">
+        /* <![CDATA[ */
+
+        const msg = [[${message}]] ? [[${message}]] : null;
+        if (msg) alert(msg);
+
+        $('td:nth-child(3)').mouseover(function () {
+            $(this).css('cursor', 'pointer');
+        }).mouseout(function () {
+            $(this).css('cursor', '');
+        });
+
+        /* ]]> */
+    </script>
+
+</th:block>

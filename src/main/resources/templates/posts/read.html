@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+	  layout:decorate="layout/basic">
+<!--/* Title */-->
+<th:block layout:fragment="title">
+	<title>Board - 게시판</title>
+</th:block>
+
+<!--/* Custom Head Tags */-->
+<th:block layout:fragment="custom-head">
+
+	<!--/* summernote lite css */-->
+	<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.css" rel="stylesheet">
+
+</th:block>
+
+<!--/* Content */-->
+<th:block layout:fragment="content">
+
+	<!--/* Page Heading */-->
+	<div class="d-sm-flex align-items-center justify-content-between mb-4">
+		<h1 class="h3 mb-0 text-gray-800">게시글 읽기</h1>
+		<div class="row">
+			<div class="col">
+				<nav aria-label="breadcrumb" class="bg-light rounded-3 p-3 mb-4">
+					<ol class="breadcrumb mb-0">
+						<li class="breadcrumb-item"><a th:href="@{/}">홈</a></li>
+						<li class="breadcrumb-item"><a th:href="@{/posts}">게시판</a></li>
+						<li class="breadcrumb-item active">글읽기</li>
+					</ol>
+				</nav>
+			</div>
+		</div>
+	</div>
+
+	<!--/* Content Row */-->
+	<section style="background-color: #eee;">
+		<div class="container py-5">
+			<div class="row">
+				<div class="col-lg-12">
+					<div class="card mb-4">
+						<div class="card-body">
+							<div class="row">
+								<div class="col-1">
+									<p class="mb-0">분류</p>
+								</div>
+								<div class="col-3">
+									<div class="input-group-sm">
+										<input type="text" th:value="${post.category}" style="text-align: center;"
+											   disabled>
+									</div>
+								</div>
+								<div class="col-2">
+									<div class="text-center">
+										<input class="form-check-input" type="checkbox" th:checked="${post.noticeYn}"
+											   disabled>
+										<label class="form-check-label" th:for="noticeYn">공지글 여부</label>
+									</div>
+								</div>
+								<div class="col-1">
+									<p class="mb-0">작성자</p>
+								</div>
+								<div class="col-1">
+									<p class="text-muted mb-0" sec:authentication="principal.nickname">닉네임</p>
+								</div>
+								<div class="col-1">
+									<p class="text-muted mb-0" th:text="'조회 ' + ${post.viewCount}">조회</p>
+								</div>
+								<div class="col-3">
+									<p class="text-muted mb-0"
+									   th:text="'작성일자 ' + ${#temporals.format(post.createdDate, 'yyyy-MM-dd')}">작성일자</p>
+								</div>
+							</div>
+							<hr>
+							<div class="row">
+								<div class="col-1">
+									<p class="mb-0">제목</p>
+								</div>
+								<div class="col-11">
+									<p class="text-muted mb-0" th:text="${post.title}">제목</p>
+								</div>
+							</div>
+							<hr>
+							<div class="row">
+								<div class="col-1">
+									<p class="mb-0">내용</p>
+								</div>
+								<div class="col-11">
+									<textarea id="summernote" th:text="${post.content}" disabled></textarea>
+								</div>
+							</div>
+							<hr>
+							<div class="row">
+								<div class="col-1">
+									<p class="mb-0">댓글 <strong id="commentsCount"></strong></p>
+								</div>
+								<div class="col-11">
+									<div class="row justify-content-center">
+										<table class="table table-borderless" width="100%" cellspacing="0"
+											   style="text-align: center;">
+											<thead>
+											<tr>
+												<td th:text="${#authentication.principal.nickname}" width="15%">작성자</td>
+												<td width="70%">
+                                                    <textarea id="writeComment" cols="80" rows="3" maxlength="1000"
+															  placeholder="내용을 입력해주세요."></textarea>
+												</td>
+												<td id="commentBtns">
+													<button type="button" class="btn btn-sm btn-primary" id="writeBtn"
+															onclick="writeComment();">작성
+													</button>
+												</td>
+											</tr>
+											</thead>
+											<tbody id="comments"></tbody>
+										</table>
+										<ul id="commentsPage" class="pagination"></ul>
+									</div>
+								</div>
+							</div>
+							<hr>
+							<div class="row float-right">
+								<div class="col-12">
+									<button type="button" class="btn btn-primary mr-2"
+											th:if="${post.wId} == ${#authentication.principal.id}"
+											th:onclick="'location.href=\'' + @{/posts/update(id=${post.id})} + '\''">
+										수정하기
+									</button>
+									<button type="button" class="btn btn-outline-primary" onclick="history.back();">
+										돌아가기
+									</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+
+</th:block>
+
+<!--/* Custom Script */-->
+<th:block layout:fragment="custom-script">
+
+	<!--/* summernote lite js */-->
+	<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/lang/summernote-ko-KR.min.js"></script>
+
+	<script th:inline="javascript">
+		/* <![CDATA[ */
+
+		$(document).ready(function () {
+			$('#summernote').summernote({
+				lang: 'ko-KR',
+				tabsize: 4,
+				height: 500,
+				toolbar: []
+			});
+			$('#summernote').summernote('disable');	//only 내용 출력, 작성/수정 X
+		});
+
+		window.onload = commentsLoad();
+
+		/* 댓글 출력 */
+		function commentsLoad(page = 0) {
+			const authId = [[${#authentication.principal.id}]];
+			const id = [[${post.id}]];
+			const $comments = $('#comments');
+			const $commentsPage = $('#commentsPage');
+
+			//기존에 출력된 댓글이 있다면 삭제
+			$comments.children('tr').remove();
+			$commentsPage.children('li').remove();
+
+			$.ajax({
+				type: 'post',
+				url: '/comments?page=' + page,
+				contentType: 'application/json',
+				dataType: 'json',
+				async: false,
+				data: JSON.stringify({
+					'id': id
+				}),
+				success: function (result) {
+					$('#commentsCount').html(result.totalElements);	//댓글 총 갯수 출력
+
+					let comments = result.content;
+
+					for (let comment of comments) {
+						let date = dateFormat(comment.createdDate);
+						let commentHtml = ``;
+						commentHtml += `
+										<tr>
+											<td>${comment.wnickname}<br>${date}</td>
+											<td style="text-align: left;">${comment.content}</td>
+									   `;
+
+						if (authId == comment.wid)	//댓글 작성자와 로그인된 사용자가 일치할 때 수정/삭제 버튼 출력
+							commentHtml += `
+												<td class="updateBtns">
+													<button type="button" class="btn btn-sm btn-outline-primary mb-1" onclick="updateCommentButtons('${authId}', '${comment.id}', '${comment.content}');">수정</button>
+													<button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteCommentConfirm('${authId}', '${comment.id}');">삭제</button>
+												</td>
+											</tr>
+										   `;
+						else
+							commentHtml += `
+												<td></td>
+											</tr>
+										   `;
+
+						$comments.append(commentHtml);
+					}
+
+					//댓글이 존재한다면 페이지 출력
+					if (!result.empty) {
+						let pageNumber = result.pageable.pageNumber;
+						let pageSize = result.pageable.pageSize;
+						let listSize = result.size;
+						let offset = result.pageable.offset;
+						let totalPages = result.totalPages;
+						let totalElements = result.totalElements;
+						let startPage = Math.floor(pageNumber / pageSize) * pageSize;
+						let endPage = (startPage + pageSize - 1) < totalPages - 1 ? (startPage + pageSize - 1) : totalPages - 1;
+
+						let commentPageHtml = ``;
+
+						//맨 앞(<<), 앞(<) 버튼 활성화 여부
+						if (pageNumber < pageSize)
+							commentPageHtml += `
+												<li class="page-item disabled">
+													<a class="page-link" href="javascript:void(0);" onclick="commentsLoad();"><span>&laquo;</span></a>
+												</li>
+												<li class="page-item disabled">
+													<a class="page-link" href="javascript:void(0);" onclick="commentsLoad(${startPage - pageSize});"><span>&lt;</span></a>
+												</li>
+												`;
+						else
+							commentPageHtml += `
+												<li class="page-item">
+													<a class="page-link" href="javascript:void(0);" onclick="commentsLoad();"><span>&laquo;</span></a>
+												</li>
+												<li class="page-item">
+													<a class="page-link" href="javascript:void(0);" onclick="commentsLoad(${startPage - pageSize});"><span>&lt;</span></a>
+												</li>
+												`;
+
+						//페이지 숫자 출력
+						for (let i = startPage; i <= endPage; i++) {
+							if (pageNumber === i)
+								commentPageHtml += `
+													<li class="page-item active">
+														<a class="page-link" href="javascript:void(0);"><span>${i + 1}</span></a>
+													</li>
+													`;
+							else
+								commentPageHtml += `
+													<li class="page-item">
+														<a class="page-link" href="javascript:void(0);" onclick="commentsLoad(${i})"><span>${i + 1}</span></a>
+													</li>
+													`;
+						}
+
+						//뒤(>) 버튼 활성화 여부
+						if ((endPage - startPage + 1) * listSize < pageSize * listSize || ((endPage - startPage + 1) * listSize === pageSize * listSize && totalElements - offset < pageSize * listSize))
+							commentPageHtml += `
+												<li class="page-item disabled">
+													<a class="page-link" href="javascript:void(0);" onclick="commentsLoad(${endPage + 1})"><span>&gt;</span></a>
+												</li>
+												`;
+						else
+							commentPageHtml += `
+												<li class="page-item">
+													<a class="page-link" href="javascript:void(0);" onclick="commentsLoad(${endPage + 1})"><span>&gt;</span></a>
+												</li>
+												`;
+
+						//맨 뒤(>>) 버튼 활성화 여부
+						if (pageNumber == totalPages - 1 || totalPages - pageSize <= startPage)
+							commentPageHtml += `
+												<li class="page-item disabled">
+													<a class="page-link" href="javascript:void(0);" onclick="commentsLoad(${totalPages - 1})"><span>&raquo;</span></a>
+												</li>
+												`;
+						else
+							commentPageHtml += `
+												<li class="page-item">
+													<a class="page-link" href="javascript:void(0);" onclick="commentsLoad(${totalPages - 1})"><span>&raquo;</span></a>
+												</li>
+												`;
+
+						$commentsPage.append(commentPageHtml);
+					}
+				},
+				error: function (error) {
+					alert('댓글을 불러올 수 없습니다.');
+				},
+			});
+			return;
+		}
+
+		/* 댓글 작성일자 포맷 수정 */
+		function dateFormat(date) {
+			let now = new Date();
+			let writtenDate = new Date(date);
+
+			//작성일자가 오늘이면 시, 분 출력
+			if (now.getFullYear() === writtenDate.getFullYear() && now.getMonth() === writtenDate.getMonth() && now.getDate() === writtenDate.getDate())
+				return (writtenDate.getHours() < 10 ? '0' : '') + writtenDate.getHours() + (writtenDate.getMinutes() < 10 ? ':0' : ':') + writtenDate.getMinutes();
+			//작성일자가 오늘이 아니라면 년, 월, 일 출력
+			else
+				return writtenDate.getFullYear() + (writtenDate.getMonth() + 1 < 10 ? '-0' : '-') + (writtenDate.getMonth() + 1) + '-' + writtenDate.getDate();
+		}
+
+		/* 댓글 작성 */
+		function writeComment() {
+			const wId = [[${#authentication.principal.id}]];
+			const pId = [[${post.id}]];
+			const content = $('#writeComment').val();
+
+			if (content == null || content == undefined || content.trim().length == 0) {
+				alert('공백을 제외한 내용을 반드시 입력해야 합니다.');
+				$('#writeComment').focus();
+				return;
+			}
+
+			$.ajax({
+				type: 'post',
+				url: '/comments/write',
+				contentType: 'application/json',
+				dataType: 'text',
+				async: false,
+				data: JSON.stringify({
+					'wid': wId,
+					'pid': pId,
+					'content': content
+				}),
+				success: function (result) {
+					$('#writeComment').val('');	//댓글 작성이 성공하면 입력된 텍스트 초기화
+				},
+				error: function (error) {
+					alert('댓글을 작성할 수 없습니다.');
+				},
+				complete: function () {
+					commentsLoad();	//댓글 다시 로딩
+				}
+			});
+		}
+
+		/* 댓글 수정 버튼 출력 */
+		function updateCommentButtons(writerId, id, content) {
+			$('#writeComment').val(content);	//댓글 수정 대상 텍스트 폼 삽입
+			$('#writeComment').focus();
+
+			$('#commentBtns #writeBtn').hide();	//댓글 작성 버튼 숨김
+			$('.updateBtns').children().hide();	//댓글 1개에 대한 수정을 위해 기존 댓글의 수정/삭제 버튼 숨김
+
+			const addBtns = `
+							<button type="button" class="btn btn-sm btn-primary mb-1" id="updateBtn" onclick="updateComment('${writerId}', '${id}');">수정</button>
+							<button type="button" class="btn btn-sm btn-outline-warning" id="cancelBtn" onclick="writeButtonBack();">취소</button>
+							`;
+
+			$('#commentBtns').append(addBtns);	//댓글 수정/취소 버튼 추가
+		}
+
+		/* 댓글 수정 버튼 출력 상태에서 취소 버튼 클릭 시 */
+		function writeButtonBack() {
+			$('#commentBtns #updateBtn').remove();	//댓글 수정 버튼 삭제
+			$('#commentBtns #cancelBtn').remove();	//댓글 취소 버튼 삭제
+
+			$('#commentBtns #writeBtn').show();	//댓글 작성 버튼 보임
+			$('#writeComment').val('');			//폼 초기화
+
+			$('.updateBtns').children().show();	//댓글 수정/삭제 버튼 보임
+		}
+
+		/* 댓글 수정 */
+		function updateComment(writerId, id) {
+			const wId = [[${#authentication.principal.id}]];
+			const pId = [[${post.id}]];
+			const content = $('#writeComment').val();
+
+			if (wId != writerId) {
+				alert('댓글 수정 권한이 없습니다.');
+				writeButtonBack();
+				return;
+			}
+
+			if (content == null || content == undefined || content.trim().length == 0) {
+				alert('공백을 제외한 내용을 반드시 입력해야 합니다.');
+				$('#writeComment').focus();
+				return;
+			}
+
+			$.ajax({
+				type: 'post',
+				url: '/comments/update',
+				contentType: 'application/json',
+				dataType: 'text',
+				async: false,
+				data: JSON.stringify({
+					'id': id,
+					'pid': pId,
+					'wid': wId,
+					'content': content
+				}),
+				success: function (result) {
+					writeButtonBack();
+				},
+				error: function (error) {
+					alert('댓글을 수정할 수 없습니다.');
+				},
+				complete: function () {
+					commentsLoad();	//댓글 다시 로딩
+				}
+			});
+		}
+
+		/* 댓글 삭제 */
+		function deleteCommentConfirm(writerId, id) {
+			if (confirm('댓글을 삭제 하시겠습니까?')) {
+				const wId = [[${#authentication.principal.id}]];
+
+				if (wId != writerId) {
+					alert('댓글 삭제 권한이 없습니다.');
+					commentsLoad();
+					return;
+				}
+
+				$.ajax({
+					type: 'post',
+					url: '/comments/delete',
+					contentType: 'application/json',
+					dataType: 'text',
+					async: false,
+					data: JSON.stringify({
+						'id': id,
+						'wid': wId,
+					}),
+					error: function (error) {
+						alert('댓글을 삭제할 수 없습니다.');
+					},
+					complete: function () {
+						commentsLoad();
+					}
+				});
+			} else
+				return;
+		}
+
+		/* ]]> */
+	</script>
+</th:block>

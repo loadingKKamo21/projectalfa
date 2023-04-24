@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+	  layout:decorate="layout/basic">
+<!--/* Title */-->
+<th:block layout:fragment="title">
+	<title>Board - 게시판</title>
+</th:block>
+
+<!--/* Custom Head Tags */-->
+<th:block layout:fragment="custom-head">
+
+	<!--/* summernote lite css */-->
+	<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.css" rel="stylesheet">
+
+</th:block>
+
+<!--/* Content */-->
+<th:block layout:fragment="content">
+
+	<!--/* Page Heading */-->
+	<div class="d-sm-flex align-items-center justify-content-between">
+		<h1 class="h3 mb-0 text-gray-800">게시글 수정</h1>
+		<div class="row">
+			<div class="col">
+				<nav aria-label="breadcrumb" class="bg-light rounded-3 p-3 mb-4">
+					<ol class="breadcrumb mb-0">
+						<li class="breadcrumb-item"><a th:href="@{/}">홈</a></li>
+						<li class="breadcrumb-item"><a th:href="@{/posts}">게시판</a></li>
+						<li class="breadcrumb-item active">글쓰기</li>
+					</ol>
+				</nav>
+			</div>
+		</div>
+	</div>
+
+	<!--/* Content Row */-->
+	<section style="background-color: #eee;">
+		<div class="container py-5">
+			<form method="post" th:action="@{/posts/update}" th:object="${form}">
+				<input type="hidden" th:field="*{id}">
+				<input type="hidden" th:field="*{wId}">
+				<div class="row">
+					<div class="col-lg-12">
+						<div class="card mb-4">
+							<div class="card-body">
+								<div class="row">
+									<div class="col-1">
+										<p class="mb-0">분류</p>
+									</div>
+									<div class="col-3">
+										<div class="input-group-sm">
+											<select class="custom-select" th:field="*{cId}" style="text-align: center;">
+												<option th:each="category : ${categories}"
+														th:text="${category.displayName}"
+														th:value="${category.id}">분류
+												</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-2">
+										<div class="text-center" sec:authorize="hasRole('ROLE_ADMIN')">
+											<input class="form-check-input" type="checkbox" th:field="*{noticeYn}">
+											<label class="form-check-label" th:for="noticeYn">공지글 여부</label>
+										</div>
+									</div>
+									<div class="col-1">
+										<p class="mb-0">작성자</p>
+									</div>
+									<div class="col-2">
+										<p class="text-muted mb-0" sec:authentication="principal.nickname">닉네임</p>
+									</div>
+									<div class="col-3">
+										<p class="text-muted mb-0"
+										   th:text="'작성일자 ' + ${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')}">
+											작성일자</p>
+									</div>
+								</div>
+								<hr>
+								<div class="row">
+									<div class="col-1">
+										<p class="mb-0">제목</p>
+									</div>
+									<div class="col-11">
+										<input type="text" th:field="*{title}" size="100" maxlength="100"
+											   placeholder="제목을 입력해주세요.">
+									</div>
+								</div>
+								<hr>
+								<div class="row">
+									<div class="col-1">
+										<p class="mb-0">내용</p>
+									</div>
+									<div class="col-11">
+										<textarea id="summernote" th:field="*{content}"></textarea>
+									</div>
+								</div>
+								<hr>
+								<div class="row float-right">
+									<div class="col">
+										<button type="submit" class="btn btn-primary mr-2">수정하기</button>
+										<button type="button" class="btn btn-outline-primary mr-2"
+												onclick="history.back();">돌아가기
+										</button>
+										<button type="button" class="btn btn-danger" onclick="deletePostConfirm();">
+											삭제하기
+										</button>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</form>
+		</div>
+		<div>
+			<form method="post" id="delete" th:action="@{/posts/delete}">
+				<input type="hidden" name="id" th:value="${form.id}">
+			</form>
+		</div>
+	</section>
+
+</th:block>
+
+<!--/* Custom Script */-->
+<th:block layout:fragment="custom-script">
+
+	<!--/* summernote lite js */-->
+	<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/lang/summernote-ko-KR.min.js"></script>
+
+	<script th:inline="javascript">
+		/* <![CDATA[ */
+
+		$(document).ready(function () {
+			const fontList = ['맑은 고딕', '굴림', '돋움', '바탕', '궁서', 'Arial', 'Courier New'];
+			$('#summernote').summernote({
+				lang: 'ko-KR',
+				placeholder: '내용을 입력해주세요.',
+				tabsize: 4,
+				height: 500,
+				fontNames: fontList,
+				fontNamesIgnoreCheck: fontList,
+				fontSizes: ['8', '9', '10', '11', '12', '14', '18', '24', '36'],
+				toolbar: [
+					['font', ['fontname', 'fontsize', 'fontsizeunit']],
+					['fontstyle', ['bold', 'italic', 'underline', 'strikethrough', 'clear']],
+					['para', ['ul', 'ol', 'paragraph']],
+					['table', ['table']],
+					['insert', ['link', 'picture']]
+				]
+			});
+		});
+
+		function deletePostConfirm() {
+			if (confirm('게시글을 삭제 하시겠습니까?'))
+				$('#delete').submit();
+			else
+				return;
+		}
+
+		/* ]]> */
+	</script>
+</th:block>

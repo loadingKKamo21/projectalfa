@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="fragments/head :: head" />
+<!--/* Title */-->
+<th:block layout:fragment="title">
+    <title></title>
+</th:block>
+
+<!--/* Custom Head Tags */-->
+<th:block layout:fragment="custom-head"></th:block>
+
+<body>
+
+	<!--/* Core Script */-->
+	<th:block th:replace="fragments/body :: script"></th:block>
+
+	<!--/* Custom Script */-->
+	<th:block layout:fragment="custom-script">
+		<script th:inline="javascript">
+		/* <![CDATA[ */
+			
+		/* ]]> */
+		</script>
+	</th:block>
+
+</body>
+</html>

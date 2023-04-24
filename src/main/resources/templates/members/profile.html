@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="layout/basic">
+<!--/* Title */-->
+<th:block layout:fragment="title">
+    <title>Board - 내 프로필</title>
+</th:block>
+
+<!--/* Custom Head Tags */-->
+<th:block layout:fragment="custom-head"></th:block>
+
+<!--/* Content */-->
+<th:block layout:fragment="content">
+
+    <!--/* Page Heading */-->
+    <div class="d-sm-flex align-items-center justify-content-between">
+        <h1 class="h3 mb-0 text-gray-800">내 프로필</h1>
+        <div class="row">
+            <div class="col">
+                <nav aria-label="breadcrumb" class="bg-light rounded-3 p-3 mb-4">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a th:href="@{/}">홈</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">내 프로필</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!--/* Content */-->
+    <section style="background-color: #eee;">
+        <div class="container py-5">
+            <div class="row">
+                <div class="col-lg-4">
+                    <div class="card mb-4">
+                        <div class="card-body text-center">
+                            <img th:src="${member.image64}
+                                         ? ${'data:image/*;base64,' + member.image64}
+                                         : 'https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava3.webp'"
+                                 alt="avatar" class="rounded-circle img-fluid" style="width: 150px;">
+                            <h5 class="my-3" th:text="${member.nickname}">Nickname</h5>
+                            <p class="text-muted mb-4" th:text="${member.signature}"></p>
+                            <div class="d-flex justify-content-center mb-2">
+                                <a class="btn btn-outline-primary ms-1" th:href="@{/members/profile-update}">프로필 수정</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <p class="mb-0">계정 유형</p>
+                                </div>
+                                <div class="col-sm-9">
+                                    <p class="text-muted mb-0" th:if="${member.role == 'USER'}">사용자</p>
+                                    <p class="text-muted mb-0" th:if="${member.role == 'ADMIN'}">관리자</p>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <p class="mb-0">아이디</p>
+                                </div>
+                                <div class="col-sm-9">
+                                    <p class="text-muted mb-0" th:text="${member.username}">username</p>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <p class="mb-0">닉네임</p>
+                                </div>
+                                <div class="col-sm-9">
+                                    <p class="text-muted mb-0" th:text="${member.nickname}">nickname</p>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <p class="mb-0">작성한 글 / 댓글</p>
+                                </div>
+                                <div class="col-sm-9">
+                                    <p class="text-muted mb-0"
+                                       th:text="${member.postsCount} + ' 개 / ' + ${member.commentsCount} + ' 개'">posts /
+                                        comments</p>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <p class="mb-0">가입일</p>
+                                </div>
+                                <div class="col-sm-9">
+                                    <p class="text-muted mb-0"
+                                       th:text="${#temporals.format(member.createdDate, 'yyyy년 MM월 dd일 HH시 mm분')}">
+                                        registration date</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-4 mb-md-0">
+                        <div class="card-body">
+                            <p class="mb-4">
+                                <span class="text-primary font-italic me-1">최근 작성한 게시글</span>
+                            </p>
+                            <table class="table table-borderless" width="100%" cellspacing="0"
+                                   style="text-align: center;">
+                                <thead>
+                                <tr class="thead-light">
+                                    <th>분류</th>
+                                    <th width="40%">제목</th>
+                                    <th>조회</th>
+                                    <th>댓글</th>
+                                    <th>등록일</th>
+                                </tr>
+                                </thead>
+                                <tbody id="postList">
+                                <tr th:each="post : ${member.posts}">
+                                    <td th:text="${post.category}">분류</td>
+                                    <td th:text="${post.title}"
+                                        th:onclick="'location.href=\'' + @{/posts/read(id=${post.id})} + '\''"
+                                        style="text-align: left; text-overflow: ellipsis; white-space: nowrap;">제목
+                                    </td>
+                                    <td th:text="${post.viewCount}">조회</td>
+                                    <td th:text="${post.commentsCount}">댓글</td>
+                                    <td th:text="${#temporals.format(post.createdDate, 'yyyy-MM-dd').equals(#temporals.format(#temporals.createToday(), 'yyyy-MM-dd'))}
+                                                 ? ${#temporals.format(post.createdDate, 'HH:mm')}
+                                                 : ${#temporals.format(post.createdDate, 'yyyy-MM-dd')}">
+                                        등록일
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card mb-4 mb-md-0">
+                        <div class="card-body">
+                            <p class="mb-4">
+                                <span class="text-primary font-italic me-1">최근 작성한 댓글</span>
+                            </p>
+                            <table class="table table-borderless" width="100%" cellspacing="0"
+                                   style="text-align: center;">
+                                <thead>
+                                <tr class="thead-light">
+                                    <th width="40%">내용</th>
+                                    <th width="10%">게시글</th>
+                                    <th>등록일</th>
+                                </tr>
+                                </thead>
+                                <tbody id="commentList">
+                                <tr th:each="comment : ${member.comments}">
+                                    <td th:text="${comment.content}"
+                                        th:onclick="'location.href=\'' + @{/posts/read(id=${comment.pId})} + '\''"
+                                        style="text-align: left; text-overflow: ellipsis; white-space: nowrap;">내용
+                                    </td>
+                                    <td th:text="${comment.pTitle}"
+                                        style="text-align: left; text-overflow: ellipsis; white-space: nowrap;">게시글
+                                    </td>
+                                    <td th:text="${#temporals.format(comment.createdDate, 'yyyy-MM-dd').equals(#temporals.format(#temporals.createToday(), 'yyyy-MM-dd'))}
+                                                 ? ${#temporals.format(comment.createdDate, 'HH:mm')}
+                                                 : ${#temporals.format(comment.createdDate, 'yyyy-MM-dd')}">
+                                        등록일
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</th:block>
+
+<!--/* Custom Script */-->
+<th:block layout:fragment="custom-script">
+    <script th:inline="javascript">
+        /* <![CDATA[ */
+
+        const msg = [[${message}]] ? [[${message}]] : null;
+        if (msg) alert(msg);
+
+        $('#postList td:nth-child(2)').mouseover(function () {
+            $(this).css('cursor', 'pointer');
+        }).mouseout(function () {
+            $(this).css('cursor', '');
+        });
+
+        $('#commentList td:nth-child(1)').mouseover(function () {
+            $(this).css('cursor', 'pointer');
+        }).mouseout(function () {
+            $(this).css('cursor', '');
+        });
+
+        /* ]]> */
+    </script>
+</th:block>
